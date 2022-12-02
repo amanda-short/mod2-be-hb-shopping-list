@@ -101,7 +101,7 @@ describe('items', () => {
     const [agent] = await registerAndLogin();
     // create a second user
     const user2 = await UserService.create(mockUser2);
-    console.log('email', user2);
+   
     const item = await Item.insert({
       description: 'apples',
       qty: 6,
@@ -110,7 +110,7 @@ describe('items', () => {
     const resp = await agent
       .put(`/api/v1/items/${item.id}`)
       .send({ bought: true });
-      console.log(resp.body);
+
     expect(resp.status).toBe(403);
   });
 
