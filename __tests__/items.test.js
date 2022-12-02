@@ -41,6 +41,27 @@ describe('items', () => {
   afterAll(() => {
     pool.end();
   });
+  
+  it('GET /api/v1/items returns all items associated with the authenticated User', async () => {
+    // create a user
+    const [agent, user] = await registerAndLogin();
+    // add a second user with items
+    const user2 = await UserService.create(mockUser2);
+    const user1Item = await Item.insert({
+      description: 'apples',
+      qty: 6,
+      userId: user.id,
+    });
+    await Item.insert({
+      description: 'eggs',
+      qty: 12,
+      userId: user2.id,
+    });
+    const resp = await agent.get('/api/v1/items');
+    expect(resp.status).toEqual(200);
+    expect(resp.body).toEqual([user1Item]);
+  });
+  
   it('POST /api/v1/items creates a new shopping item with the current user', async () => {
     const [agent, user] = await registerAndLogin();
     const newItem = { description: 'eggs', qty: 12 };
@@ -50,29 +71,9 @@ describe('items', () => {
       id: expect.any(String),
       description: newItem.description,
       qty: newItem.qty,
-      user_id: user.id,
+      userId: user.id,
       bought: false,
     });
-  });
-
-  it('GET /api/v1/items returns all items associated with the authenticated User', async () => {
-    // create a user
-    const [agent, user] = await registerAndLogin();
-    // add a second user with items
-    const user2 = await UserService.create(mockUser2);
-    const user1Item = await Item.insert({
-      description: 'apples',
-      qty: 6,
-      user_id: user.id,
-    });
-    await Item.insert({
-      description: 'eggs',
-      qty: 12,
-      user_id: user2.id,
-    });
-    const resp = await agent.get('/api/v1/items');
-    expect(resp.status).toEqual(200);
-    expect(resp.body).toEqual([user1Item]);
   });
 
   it('GET /api/v1/items should return a 401 if not authenticated', async () => {
@@ -86,7 +87,7 @@ describe('items', () => {
     const item = await Item.insert({
       description: 'apples',
       qty: 6,
-      user_id: user.id,
+      userId: user.id,
     });
     const resp = await agent
       .put(`/api/v1/items/${item.id}`)
@@ -100,14 +101,16 @@ describe('items', () => {
     const [agent] = await registerAndLogin();
     // create a second user
     const user2 = await UserService.create(mockUser2);
+   
     const item = await Item.insert({
       description: 'apples',
       qty: 6,
-      user_id: user2.id,
+      userId: user2.id,
     });
     const resp = await agent
       .put(`/api/v1/items/${item.id}`)
       .send({ bought: true });
+
     expect(resp.status).toBe(403);
   });
 
@@ -116,11 +119,10 @@ describe('items', () => {
     const item = await Item.insert({
       description: 'apples',
       qty: 6,
-      user_id: user.id,
+      userId: user.id,
     });
     const resp = await agent.delete(`/api/v1/items/${item.id}`);
     expect(resp.status).toBe(200);
-
     const check = await Item.getById(item.id);
     expect(check).toBeNull();
   });
