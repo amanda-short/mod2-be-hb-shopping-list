@@ -87,7 +87,7 @@ describe('items', () => {
     const item = await Item.insert({
       description: 'apples',
       qty: 6,
-      user_id: user.id,
+      userId: user.id,
     });
     const resp = await agent
       .put(`/api/v1/items/${item.id}`)
@@ -96,21 +96,23 @@ describe('items', () => {
     expect(resp.body).toEqual({ ...item, bought: true });
   });
 
-  // it('UPDATE /api/v1/items/:id should 403 for invalid users', async () => {
-  //   // create a user
-  //   const [agent] = await registerAndLogin();
-  //   // create a second user
-  //   const user2 = await UserService.create(mockUser2);
-  //   const item = await Item.insert({
-  //     description: 'apples',
-  //     qty: 6,
-  //     user_id: user2.id,
-  //   });
-  //   const resp = await agent
-  //     .put(`/api/v1/items/${item.id}`)
-  //     .send({ bought: true });
-  //   expect(resp.status).toBe(403);
-  // });
+  it('UPDATE /api/v1/items/:id should 403 for invalid users', async () => {
+    // create a user
+    const [agent] = await registerAndLogin();
+    // create a second user
+    const user2 = await UserService.create(mockUser2);
+    console.log('email', user2);
+    const item = await Item.insert({
+      description: 'apples',
+      qty: 6,
+      userId: user2.id,
+    });
+    const resp = await agent
+      .put(`/api/v1/items/${item.id}`)
+      .send({ bought: true });
+      console.log(resp.body);
+    expect(resp.status).toBe(403);
+  });
 
   it('DELETE /api/v1/items/:id should delete items for valid user', async () => {
     const [agent, user] = await registerAndLogin();
